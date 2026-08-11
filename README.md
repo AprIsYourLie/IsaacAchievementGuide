@@ -16,7 +16,7 @@
 
 ## 使用方法
 
-你可以直接打开 [在线网站](https://aprisyourlie.github.io/IsaacAchievementGuide/) 使用；也可以单独下载 [IsaacAchievementGuide-standalone.html](https://github.com/AprIsYourLie/IsaacAchievementGuide/blob/main/IsaacAchievementGuide-standalone.html) （右上角download raw file）离线使用。
+你可以直接打开 [在线网站](https://aprisyourlie.github.io/IsaacAchievementGuide/) 使用；也可以单独下载 [IsaacAchievementGuide-standalone.html](https://github.com/AprIsYourLie/IsaacAchievementGuide/blob/main/IsaacAchievementGuide-standalone.html) 离线使用。
 
 - 在线使用：打开网站后即可直接浏览完整成就图鉴。
 - 离线使用：进入 GitHub 文件页面，点击右上角的 **Download raw file**，下载后双击 HTML 文件。
