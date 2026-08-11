@@ -1,0 +1,19 @@
+# 本地研究资料与个人数据
+/.local/
+
+# 游戏存档默认不进入公开仓库；仅保留合成测试样例
+*.dat
+!/tools/sample_save.dat
+
+# 测试生成物
+/tools/e2e_screenshot.png
+/debug.log
+
+# Python / Node / 编辑器临时文件
+__pycache__/
+*.py[cod]
+node_modules/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>以撒的结合 · 成就分析</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <p class="eyebrow">本地存档分析工具</p>
+    <h1>以撒的结合 · 成就分析</h1>
+    <p class="subtitle">支持 Repentance / Repentance+</p>
+  </header>
+
+  <main>
+    <section id="upload-section">
+      <div id="drop-zone" tabindex="0" role="button" aria-label="选择或拖入存档文件">
+        <div class="drop-icon" aria-hidden="true">📁</div>
+        <p class="drop-title">拖入存档文件，或点击选择</p>
+        <p class="drop-hint">文件只会在浏览器本地解析，不会上传到服务器</p>
+        <input type="file" id="file-input" accept=".dat" hidden />
+      </div>
+
+      <details class="help-box">
+        <summary>存档文件在哪里？</summary>
+        <div class="help-content">
+          <p><strong>忏悔 Repentance：</strong></p>
+          <code>C:\Users\&lt;用户名&gt;\Documents\My Games\Binding of Isaac Repentance\rep_persistentgamedata1.dat</code>
+          <p><strong>忏悔+ Repentance+：</strong></p>
+          <code>C:\Users\&lt;用户名&gt;\Documents\My Games\Binding of Isaac Repentance+\rep+persistentgamedata1.dat</code>
+          <p class="note">文件名结尾的 1 / 2 / 3 对应游戏内三个存档位。启用 Steam 云同步时，也可在 <code>Steam\userdata\&lt;SteamID&gt;\250900\remote\</code> 中寻找。</p>
+          <p class="note">请选择 <code>persistentgamedata</code> 持久存档，而不是 <code>gamestate</code> 单局存档。</p>
+        </div>
+      </details>
+
+      <div id="error-box" class="error-box" hidden></div>
+    </section>
+
+    <section id="result-section">
+      <div class="card overview-card" data-save-only hidden>
+        <div class="overview-main">
+          <div class="big-number"><span id="stat-unlocked">0</span><span class="dim"> / <span id="stat-total">641</span></span></div>
+          <div class="dim">项成就已解锁</div>
+        </div>
+        <div class="progress-track"><div id="progress-bar" class="progress-fill"></div></div>
+        <div id="progress-pct" class="progress-pct dim"></div>
+        <div id="save-meta" class="save-meta dim"></div>
+      </div>
+
+      <div class="card" data-save-only hidden>
+        <h2>分类进度</h2>
+        <div id="category-grid" class="category-grid"></div>
+      </div>
+
+      <div class="card" data-save-only hidden>
+        <h2>存档统计 <span class="tag-exp">实验性</span></h2>
+        <div id="stats-grid" class="stats-grid"></div>
+      </div>
+
+      <section class="catalog-section" aria-labelledby="catalog-title">
+        <div class="catalog-heading">
+          <div class="catalog-title-block">
+            <p class="eyebrow">ACHIEVEMENT CATALOGUE</p>
+            <h2 id="catalog-title">成就图鉴</h2>
+          </div>
+          <div class="catalog-heading-side">
+            <p id="catalog-note" class="catalog-note">尚未导入存档，可直接浏览全部成就。点击名称或奖励可打开中文维基。</p>
+            <a class="wiki-home-link" href="https://isaac.huijiwiki.com/wiki/%E9%A6%96%E9%A1%B5" target="_blank" rel="noopener noreferrer">以撒的结合中文维基</a>
+          </div>
+        </div>
+
+        <div id="category-tabs" class="category-tabs" role="tablist" aria-label="成就分类">
+          <button type="button" data-v="all" class="active">全部</button>
+          <button type="button" data-v="normal">普通角色</button>
+          <button type="button" data-v="tainted">堕化角色</button>
+          <button type="button" data-v="challenge">挑战成就</button>
+          <button type="button" data-v="level">关卡成就</button>
+          <button type="button" data-v="character-unlock">角色解锁</button>
+          <button type="button" data-v="boss">Boss 成就</button>
+          <button type="button" data-v="other">其他成就</button>
+        </div>
+
+        <div class="toolbar">
+          <div class="btn-group" id="filter-status" aria-label="解锁状态" hidden>
+            <button type="button" data-v="all" class="active">全部状态</button>
+            <button type="button" data-v="locked">未解锁</button>
+            <button type="button" data-v="unlocked">已解锁</button>
+          </div>
+          <label id="character-filter-wrap" class="select-wrap" hidden>
+            <span>人物</span>
+            <select id="filter-character"><option value="all">全部人物</option></select>
+          </label>
+          <label class="select-wrap">
+            <span>优先级</span>
+            <select id="filter-priority">
+              <option value="all">全部</option>
+              <option value="优先">优先</option>
+              <option value="推荐">推荐</option>
+              <option value="none">无标记</option>
+            </select>
+          </label>
+          <button type="button" id="hide-completed" class="toolbar-button" aria-pressed="false" hidden>隐藏已完成</button>
+          <button type="button" id="reset-manual" class="toolbar-button quiet" hidden>清除手动修正</button>
+          <label class="search-wrap">
+            <span class="sr-only">搜索成就</span>
+            <input type="search" id="search-box" placeholder="搜索成就名、奖励道具、解锁条件或编号" />
+          </label>
+        </div>
+
+        <div class="catalog-meta">
+          <div id="list-summary" class="dim"></div>
+          <div id="status-legend" class="legend" hidden><span>✓ 已解锁</span><span>🔒 未解锁</span></div>
+        </div>
+
+        <div id="achievement-grid" class="achievement-grid"></div>
+
+        <nav id="pagination" class="pagination" aria-label="成就分页" hidden>
+          <button type="button" id="page-prev">上一页</button>
+          <div id="page-numbers" class="page-numbers" aria-label="页码"></div>
+          <button type="button" id="page-next">下一页</button>
+          <span id="page-info" class="page-info"></span>
+          <label class="page-jump">
+            <span>跳至</span>
+            <input type="number" id="page-jump-input" min="1" inputmode="numeric" aria-label="跳转页码" />
+            <span>页</span>
+          </label>
+          <button type="button" id="page-jump-button">跳转</button>
+        </nav>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer dim">
+    <p>非官方开源工具 · 641 项成就 · 存档只在本地解析，不会上传或修改</p>
+  </footer>
+
+  <script src="data/achievements.js"></script>
+  <script src="data/repentance-plus.js"></script>
+  <script src="data/achievements-reference-zh.js"></script>
+  <script src="data/achievements-zh.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
