@@ -1,5 +1,5 @@
 /**
- * 生成可独立复制的单文件版本。
+ * 生成可独立复制的单独文件版本。
  * CSS、JavaScript、成就数据、图集和 4 个联机成就图标都会嵌入 HTML。
  */
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
@@ -49,14 +49,14 @@ for (const source of scripts) {
   let inline = `  <script>\n${code}\n  </script>`;
   if (source === 'js/app.js') {
     const icons = JSON.stringify(iconData).replaceAll('</script', '<\\/script');
-    inline = `  <script>\n/* 单文件版内嵌图集与联机成就图标 */\nglobalThis.ACHIEVEMENT_ATLAS_DATA = ${JSON.stringify(atlasData)};\nglobalThis.ACHIEVEMENT_ICON_DATA = ${icons};\n  </script>\n${inline}`;
+    inline = `  <script>\n/* 单独文件版内嵌图集与联机成就图标 */\nglobalThis.ACHIEVEMENT_ATLAS_DATA = ${JSON.stringify(atlasData)};\nglobalThis.ACHIEVEMENT_ICON_DATA = ${icons};\n  </script>\n${inline}`;
   }
   html = html.replace(`  <script src="${source}"></script>`, inline);
 }
 
 html = html
-  .replace('<title>以撒的结合 · 成就分析</title>', '<title>以撒的结合 · 成就分析（单文件便携版）</title>')
-  .replace('<body>', '<body>\n  <!-- 此文件为自动生成的单文件便携版；请修改源码后重新运行 tools/build_standalone.mjs。 -->');
+  .replace('<title>以撒的结合 · 成就分析</title>', '<title>以撒的结合 · 成就分析（单独文件版）</title>')
+  .replace('<body>', '<body>\n  <!-- 此文件为自动生成的单独文件版；请修改源码后重新运行 tools/build_standalone.mjs。 -->');
 
 writeFileSync(outputPath, html, 'utf8');
 console.log(`已生成：${outputPath}`);

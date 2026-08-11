@@ -150,7 +150,7 @@ try:
         check('file:// 点击可弹出文件选择器并解析', local_page.text_content('#stat-unlocked').strip() == '7')
         check('file:// 页面无 JavaScript 错误', not local_errors)
 
-        # 把单文件版复制到不含任何项目资源的临时目录，模拟只带走一个 HTML。
+        # 把单独文件版复制到不含任何项目资源的临时目录，模拟只带走一个 HTML。
         standalone_errors = []
         with tempfile.TemporaryDirectory() as temporary_directory:
             isolated_html = Path(temporary_directory) / 'IsaacAchievementGuide-standalone.html'
@@ -162,10 +162,10 @@ try:
             check('隔离单文件未导入时可直接浏览', standalone_page.locator('.achievement-card.neutral').count() == 32)
             standalone_page.set_input_files('#file-input', str(ROOT / 'tools' / 'sample_save.dat'))
             standalone_page.wait_for_selector('#result-section:not([hidden])', timeout=5000)
-            check('单文件版离开项目文件夹后仍可解析', standalone_page.text_content('#stat-unlocked').strip() == '7')
+            check('单独文件版离开项目文件夹后仍可解析', standalone_page.text_content('#stat-unlocked').strip() == '7')
             icon_style = standalone_page.locator('.achievement-card .achievement-icon-sprite').first.get_attribute('style')
-            check('单文件版图集已经内嵌', 'data:image/webp;base64' in icon_style)
-            check('单文件版无 JavaScript 错误', not standalone_errors)
+            check('单独文件版图集已经内嵌', 'data:image/webp;base64' in icon_style)
+            check('单独文件版无 JavaScript 错误', not standalone_errors)
             standalone_page.close()
 
         browser.close()

@@ -16,7 +16,7 @@
 
 ## 使用方法
 
-1. 下载核心文件 [IsaacAchievementGuide-standalone.html](./IsaacAchievementGuide-standalone.html)。在 GitHub 文件页面中点击右上角的 **Download raw file** 即可下载。
+1. 下载单独文件版 [IsaacAchievementGuide-standalone.html](./IsaacAchievementGuide-standalone.html)。在 GitHub 文件页面中点击右上角的 **Download raw file** 即可下载。
 2. 双击打开下载的 HTML 文件，即可直接浏览完整成就图鉴。
 3. 如需检测完成进度，点击页面顶部的存档选择区域，选择 `persistentgamedata*.dat`。
 
