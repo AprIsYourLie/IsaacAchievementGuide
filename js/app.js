@@ -5,6 +5,7 @@ if (!globalThis.IsaacSaveParser?.parseSaveFile) {
 const HUIJI_WIKI_PREFIX = 'https://isaac.huijiwiki.com/wiki/';
 const MAX_SAVE_FILE_BYTES = 2 * 1024 * 1024;
 const PAGE_SIZE = 32;
+const SEARCH_DEBOUNCE_MS = 180;
 const LOCAL_STATE_KEY = 'isaac-achievement-guide-state-v2';
 const ATLAS_COLUMNS = 20;
 const ATLAS_ICON_SIZE = 92;
@@ -23,15 +24,18 @@ const CAT_NAMES = {
 };
 const KNOWN_STATS = [
   { index: 1, label: '妈妈击杀数' },
-  { index: 9, label: '死亡次数' },
-  { index: 20, label: '伊甸币' },
-  { index: 21, label: '当前连胜' },
-  { index: 22, label: '最佳连胜' },
+  { index: 10, label: '死亡次数' },
+  { index: 21, label: '伊甸币' },
+  { index: 22, label: '当前连胜' },
+  { index: 23, label: '最佳连胜' },
 ];
 
 let currentSave = null;
 let currentFile = null;
 let catalogueContext = null;
+let achievementSearchIndex = new Map();
+let searchTimer = null;
+let searchIsComposing = false;
 const localState = loadLocalState();
 const filterState = {
   status: 'all', cat: 'all', character: 'all', priority: 'all', q: '', page: 1,
@@ -43,6 +47,7 @@ const fileInput = document.getElementById('file-input');
 const errorBox = document.getElementById('error-box');
 const characterSelect = document.getElementById('filter-character');
 const prioritySelect = document.getElementById('filter-priority');
+const searchBox = document.getElementById('search-box');
 const hideCompletedButton = document.getElementById('hide-completed');
 const resetManualButton = document.getElementById('reset-manual');
 
@@ -108,10 +113,21 @@ resetManualButton.addEventListener('click', () => {
   refreshAchievementView();
 });
 
-document.getElementById('search-box').addEventListener('input', (event) => {
-  filterState.q = event.target.value.trim().toLowerCase();
-  filterState.page = 1;
-  applyFilters();
+searchBox.addEventListener('input', () => {
+  if (!searchIsComposing) scheduleSearch();
+});
+searchBox.addEventListener('compositionstart', () => {
+  searchIsComposing = true;
+  cancelPendingSearch();
+});
+searchBox.addEventListener('compositionend', () => {
+  searchIsComposing = false;
+  scheduleSearch();
+});
+searchBox.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || event.isComposing || searchIsComposing) return;
+  event.preventDefault();
+  commitSearch();
 });
 document.getElementById('page-prev').addEventListener('click', () => {
   if (filterState.page > 1) {
@@ -132,8 +148,40 @@ initializeCatalogue();
 
 function initializeCatalogue() {
   const ids = Object.keys(ACHIEVEMENTS).map(Number).sort((a, b) => a - b);
+  achievementSearchIndex = buildAchievementSearchIndex(ids);
   catalogueContext = { ids, unlockedSet: new Set(), saveLoaded: false };
   syncSaveDependentUi();
+  applyFilters();
+}
+
+function buildAchievementSearchIndex(ids) {
+  return new Map(ids.map((id) => {
+    const zh = globalThis.ISAAC_ZH[id];
+    const text = `${id} ${zh.nameZh} ${zh.nameEn} ${zh.unlockZh} ${zh.rewardZh} ${zh.type} ${zh.character}`.toLowerCase();
+    return [id, text];
+  }));
+}
+
+function cancelPendingSearch() {
+  if (searchTimer === null) return;
+  clearTimeout(searchTimer);
+  searchTimer = null;
+}
+
+function scheduleSearch() {
+  cancelPendingSearch();
+  searchTimer = setTimeout(() => {
+    searchTimer = null;
+    commitSearch();
+  }, SEARCH_DEBOUNCE_MS);
+}
+
+function commitSearch() {
+  cancelPendingSearch();
+  const query = searchBox.value.trim().toLowerCase();
+  if (query === filterState.q) return;
+  filterState.q = query;
+  filterState.page = 1;
   applyFilters();
 }
 
@@ -310,10 +358,7 @@ function applyFilters(scrollToGrid = false) {
     const priority = priorityFor(id);
     if (filterState.priority === 'none' && priority) return false;
     if (filterState.priority !== 'all' && filterState.priority !== 'none' && priority !== filterState.priority) return false;
-    if (filterState.q) {
-      const haystack = `${id} ${zh.nameZh} ${zh.nameEn} ${zh.unlockZh} ${zh.rewardZh} ${zh.type} ${zh.character}`.toLowerCase();
-      if (!haystack.includes(filterState.q)) return false;
-    }
+    if (filterState.q && !achievementSearchIndex.get(id).includes(filterState.q)) return false;
     return true;
   });
 
@@ -396,10 +441,16 @@ function achievementIconMarkup(id, name) {
 }
 
 function rewardLinksMarkup(zh) {
+  if (zh.rewardSegments?.length) {
+    return zh.rewardSegments.map((item) => item.url
+      ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.text)}</a>`
+      : escapeHtml(item.text)).join('');
+  }
   const links = zh.rewardLinks?.length
     ? zh.rewardLinks
     : [{ name: zh.rewardZh, url: zh.rewardWiki || huijiPageUrl(zh.rewardZh) }];
-  return links.map((item) => item.url
+  const prefix = zh.rewardPrefix ? escapeHtml(zh.rewardPrefix) : '';
+  return prefix + links.map((item) => item.url
     ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.name)}</a>`
     : escapeHtml(item.name)).join('、');
 }

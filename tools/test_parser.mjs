@@ -23,10 +23,10 @@ check('解锁成就 ID 正确 [1,2,3,5,8,100,637]',
   JSON.stringify(unlocked) === JSON.stringify([1, 2, 3, 5, 8, 100, 637]));
 
 check('Mom Kills = 77', save.counters[1] === 77);
-check('Deaths = 42', save.counters[9] === 42);
-check('Eden Tokens = 13', save.counters[20] === 13);
-check('Win Streak = 5', save.counters[21] === 5);
-check('Best Streak = 9', save.counters[22] === 9);
+check('Deaths = 42', save.counters[10] === 42);
+check('Eden Tokens = 13', save.counters[21] === 13);
+check('Win Streak = 5', save.counters[22] === 5);
+check('Best Streak = 9', save.counters[23] === 9);
 check('收集品 #105 已见过', save.collectibles[105] === 1);
 check('挑战 #7 已完成', save.challengeCounters[7] === 1);
 check('图鉴 encounters[0] = {entity:100,value:5}',

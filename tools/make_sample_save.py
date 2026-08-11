@@ -69,10 +69,10 @@ def build_sample() -> bytes:
     # chunk 2: 计数器
     counters = [0] * 400
     counters[1] = 77    # Mom Kills
-    counters[9] = 42    # Deaths
-    counters[20] = 13   # Eden Tokens
-    counters[21] = 5    # Win Streak
-    counters[22] = 9    # Best Streak
+    counters[10] = 42   # Deaths
+    counters[21] = 13   # Eden Tokens
+    counters[22] = 5    # Win Streak
+    counters[23] = 9    # Best Streak
     out += chunk_s4(2, counters)
 
     out += chunk_s4(3, [0] * 100)                    # level counters

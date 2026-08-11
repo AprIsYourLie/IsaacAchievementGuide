@@ -13,6 +13,7 @@ from playwright.sync_api import sync_playwright
 
 PORT = 8791
 ROOT = Path(__file__).resolve().parents[1]
+SEARCH_SETTLE_MS = 260
 failures = 0
 
 
@@ -21,6 +22,11 @@ def check(name, condition):
     print(('PASS' if condition else 'FAIL') + '  ' + name)
     if not condition:
         failures += 1
+
+
+def fill_search(page, value):
+    page.fill('#search-box', value)
+    page.wait_for_timeout(SEARCH_SETTLE_MS)
 
 
 class ReusableTCPServer(socketserver.TCPServer):
@@ -61,25 +67,128 @@ try:
         check('未导入时隐藏状态筛选', page.locator('#filter-status').is_hidden())
         check('卡片已删除重复成就描述', page.locator('.achievement-desc').count() == 0)
         check('卡片已删除底部类别文字', page.locator('.type-line').count() == 0)
+        reward_links_5 = page.locator('.achievement-card[data-id="5"] .reward-line a')
+        check('成就 #5 显示四大骑士的独立链接', reward_links_5.count() == 4)
+        check('成就 #5 分别链接四大骑士实体页面',
+              [reward_links_5.nth(index).get_attribute('href').split('/')[-1]
+               for index in range(4)] == [
+                   '63#63.0.0', '64#64.0.0', '65#65.0.0', '66#66.0.0'
+               ])
+        reward_links_6 = page.locator('.achievement-card[data-id="6"] .reward-line a')
+        check('成就 #6 显示肉块和绷带球两个奖励链接', reward_links_6.count() == 2)
+        check('成就 #6 奖励分别链接 C73 和 C207',
+              reward_links_6.nth(0).get_attribute('href').endswith('/C73') and
+              reward_links_6.nth(1).get_attribute('href').endswith('/C207'))
+        page.locator('#page-numbers .page-number[data-page="2"]').click()
+        reward_33 = page.locator('.achievement-card[data-id="33"] .reward-line')
+        check('成就 #33 分开显示难度增加和半魂心',
+              reward_33.inner_text() == '解锁奖励\n普通模式与困难模式难度增加、半魂心')
+        check('成就 #33 仅半魂心带中文维基链接',
+              reward_33.locator('a').count() == 1 and
+              reward_33.locator('a').inner_text() == '半魂心' and
+              '%E5%8D%8A%E9%AD%82%E5%BF%83' in reward_33.locator('a').get_attribute('href'))
+        page.locator('#page-numbers .page-number[data-page="1"]').click()
+
+        fill_search(page, '解锁"地窖"')
+        reward_86 = page.locator('.achievement-card[data-id="86"] .reward-line')
+        check('解锁关卡成就仅链接关卡部分',
+              reward_86.inner_text() == '解锁奖励\n解锁"地窖"' and
+              reward_86.locator('a').inner_text() == '"地窖"' and
+              '%E5%9C%B0%E7%AA%96' in reward_86.locator('a').get_attribute('href'))
+        fill_search(page, '解锁挑战#4：黑暗降临')
+        reward_157 = page.locator('.achievement-card[data-id="157"] .reward-line')
+        check('解锁挑战成就仅链接挑战部分',
+              reward_157.inner_text() == '解锁奖励\n解锁挑战#4：黑暗降临' and
+              reward_157.locator('a').inner_text() == '挑战#4：黑暗降临' and
+              reward_157.locator('a').get_attribute('href').endswith('/4'))
+
+        fill_search(page, '六面骰 + 以撒初始携带')
+        reward_29 = page.locator('.achievement-card[data-id="29"] .reward-line')
+        check('成就 #29 仅链接两处六面骰和人物名称',
+              reward_29.locator('a').all_inner_texts() == ['六面骰', '以撒', '六面骰'] and
+              reward_29.inner_text() == '解锁奖励\n六面骰 + 以撒初始携带"六面骰"')
+        fill_search(page, '店主初始额外拥有一个心之容器')
+        reward_191 = page.locator('.achievement-card[data-id="191"] .reward-line')
+        check('成就 #191 去除重复店主并仅链接人物名称',
+              '店主店主' not in reward_191.inner_text() and
+              reward_191.locator('a').all_inner_texts() == ['店主', '店主'])
+        fill_search(page, '脆皮虫、粪山幼崽')
+        check('成就 #346 显示并链接全部八个敌人',
+              page.locator('.achievement-card[data-id="346"] .reward-line a').count() == 8)
+        fill_search(page, '骨堆畸胎、超级绷带人')
+        check('成就 #347 显示并链接全部八个敌人',
+              page.locator('.achievement-card[data-id="347"] .reward-line a').count() == 8)
+        fill_search(page, '隐藏房和错误房生成的道具')
+        reward_593 = page.locator('.achievement-card[data-id="593"] .reward-line')
+        check('成就 #593 分别链接三个目标词条',
+              reward_593.locator('a').all_inner_texts() == ['隐藏房', '错误房', '错误道具'])
+        fill_search(page, '')
 
         page.click('#category-tabs button[data-v="normal"]')
         check('未导入时可使用分类和人物分组', page.locator('.achievement-card').count() == 32 and page.locator('.achievement-group-title').count() > 0)
         page.click('#category-tabs button[data-v="all"]')
-        page.fill('#search-box', 'Magdalene')
-        check('未导入时可搜索英文名', page.locator('.achievement-card').count() > 0)
+
+        page.fill('#search-box', '115')
+        check('搜索输入后不会立即重绘卡片', page.locator('.achievement-card').count() == 32)
+        page.wait_for_timeout(SEARCH_SETTLE_MS)
+        check('停止输入后搜索成就 #115', page.locator('.achievement-card[data-id="115"]').count() == 1 and page.locator('.achievement-card').count() == 1)
+        page.fill('#search-box', '11')
+        check('从 115 删除为 11 时保留旧结果等待输入结束', page.locator('.achievement-card[data-id="115"]').count() == 1 and page.locator('.achievement-card').count() == 1)
+        page.wait_for_timeout(SEARCH_SETTLE_MS)
+        check('停止删除后更新 11 的搜索结果', page.locator('.achievement-card').count() == 21)
+
+        page.fill('#search-box', '115')
+        page.press('#search-box', 'Enter')
+        check('搜索框回车可立即触发', page.locator('.achievement-card[data-id="115"]').count() == 1 and page.locator('.achievement-card').count() == 1)
+        page.evaluate("window.__searchCardBeforeEnter = document.querySelector('.achievement-card')")
+        page.press('#search-box', 'Enter')
+        check('相同关键词回车不会重复渲染', page.evaluate("document.querySelector('.achievement-card') === window.__searchCardBeforeEnter"))
+
         page.fill('#search-box', '')
-        page.fill('#search-box', "There's Options")
+        page.press('#search-box', 'Enter')
+        page.fill('#search-box', '1')
+        page.wait_for_timeout(50)
+        page.fill('#search-box', '11')
+        page.wait_for_timeout(50)
+        page.fill('#search-box', '115')
+        check('连续快速输入期间不刷新中间结果', page.locator('.achievement-card').count() == 32)
+        page.wait_for_timeout(SEARCH_SETTLE_MS)
+        check('连续快速输入只应用最终关键词', page.locator('.achievement-card[data-id="115"]').count() == 1 and page.locator('.achievement-card').count() == 1)
+
+        page.evaluate("""() => {
+          const input = document.querySelector('#search-box');
+          input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: 'gengduo' }));
+          input.value = '更多选择';
+          input.dispatchEvent(new InputEvent('input', {
+            bubbles: true,
+            data: '更多选择',
+            inputType: 'insertCompositionText',
+            isComposing: true,
+          }));
+        }""")
+        page.wait_for_timeout(SEARCH_SETTLE_MS)
+        check('中文输入法选字期间不刷新结果', page.locator('.achievement-card[data-id="115"]').count() == 1)
+        page.evaluate("""() => {
+          document.querySelector('#search-box').dispatchEvent(
+            new CompositionEvent('compositionend', { bubbles: true, data: '更多选择' })
+          );
+        }""")
+        page.wait_for_timeout(SEARCH_SETTLE_MS)
+        check('中文输入法选字结束后执行搜索', page.locator('.achievement-card[data-id="135"]').count() == 1)
+
+        fill_search(page, 'Magdalene')
+        check('未导入时可搜索英文名', page.locator('.achievement-card').count() > 0)
+        fill_search(page, "There's Options")
         reward_links = page.locator('.achievement-card[data-id="135"] .reward-line a')
         check('成就 #135 显示两个独立奖励链接', reward_links.count() == 2)
         check('成就 #135 奖励分别链接 C249 和 C414',
               reward_links.nth(0).get_attribute('href').endswith('/C249') and
               reward_links.nth(1).get_attribute('href').endswith('/C414'))
-        page.fill('#search-box', '')
-        page.fill('#search-box', '更多选择')
+        fill_search(page, '更多选择')
         check('搜索框可按奖励道具关键词检索', page.locator('.achievement-card[data-id="135"]').count() == 1)
-        page.fill('#search-box', '捐献50枚硬币')
+        fill_search(page, '捐献50枚硬币')
         check('搜索框可按解锁条件关键词检索', page.locator('.achievement-card[data-id="135"]').count() == 1)
-        page.fill('#search-box', '')
+        fill_search(page, '')
         page.select_option('#filter-priority', '推荐')
         check('未导入时可筛选优先级', page.locator('.achievement-card').count() == 32)
         page.select_option('#filter-priority', 'all')
@@ -92,6 +201,9 @@ try:
         check('总成就数为 641', page.text_content('#stat-total').strip() == '641')
         check('完成率为 1.1%', '1.1%' in page.text_content('#progress-pct'))
         check('校验和有效', '校验和 ✓' in page.text_content('#save-meta'))
+        check('统计计数器使用正确编号', page.locator('#stats-grid .stat-item').all_inner_texts() == [
+            '77\n妈妈击杀数', '42\n死亡次数', '13\n伊甸币', '5\n当前连胜', '9\n最佳连胜'
+        ])
 
         cards = page.locator('.achievement-card')
         check('导入后默认分页显示 32 张卡片', cards.count() == 32)
@@ -109,10 +221,10 @@ try:
         check('已解锁筛选显示 7 张卡片', page.locator('.achievement-card').count() == 7)
         check('已解锁卡片显示勾选', page.locator('.achievement-card.done .card-status').first.inner_text() == '✓')
 
-        page.fill('#search-box', 'Magdalene')
+        fill_search(page, 'Magdalene')
         check('英文名仍可搜索', page.locator('.achievement-card').count() == 1)
 
-        page.fill('#search-box', '')
+        fill_search(page, '')
         page.click('#filter-status button[data-v="all"]')
         page.click('#category-tabs button[data-v="normal"]')
         check('普通角色分类每页显示 32 张卡片', page.locator('.achievement-card').count() == 32)
@@ -143,6 +255,9 @@ try:
         local_page.goto((ROOT / 'index.html').as_uri())
         local_page.wait_for_selector('.achievement-card', timeout=5000)
         check('file:// 未导入时可直接浏览 32 项', local_page.locator('.achievement-card.neutral').count() == 32)
+        fill_search(local_page, '115')
+        check('file:// 支持延迟搜索', local_page.locator('.achievement-card[data-id="115"]').count() == 1)
+        fill_search(local_page, '')
         with local_page.expect_file_chooser(timeout=5000) as chooser:
             local_page.click('#drop-zone')
         chooser.value.set_files(str(ROOT / 'tools' / 'sample_save.dat'))
@@ -160,6 +275,9 @@ try:
             standalone_page.goto(isolated_html.as_uri())
             standalone_page.wait_for_selector('.achievement-card', timeout=5000)
             check('隔离单文件未导入时可直接浏览', standalone_page.locator('.achievement-card.neutral').count() == 32)
+            fill_search(standalone_page, '115')
+            check('隔离单文件支持延迟搜索', standalone_page.locator('.achievement-card[data-id="115"]').count() == 1)
+            fill_search(standalone_page, '')
             standalone_page.set_input_files('#file-input', str(ROOT / 'tools' / 'sample_save.dat'))
             standalone_page.wait_for_selector('#result-section:not([hidden])', timeout=5000)
             check('单独文件版离开项目文件夹后仍可解析', standalone_page.text_content('#stat-unlocked').strip() == '7')
