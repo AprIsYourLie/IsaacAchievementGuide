@@ -16,9 +16,11 @@
 
 ## 使用方法
 
-1. 下载单独文件版 [IsaacAchievementGuide-standalone.html](./IsaacAchievementGuide-standalone.html)。在 GitHub 文件页面中点击右上角的 **Download raw file** 即可下载。
-2. 双击打开下载的 HTML 文件，即可直接浏览完整成就图鉴。
-3. 如需检测完成进度，点击页面顶部的存档选择区域，选择 `persistentgamedata*.dat`。
+你可以直接打开 [在线网站](https://aprisyourlie.github.io/IsaacAchievementGuide/) 使用，也可以单独下载 [IsaacAchievementGuide-standalone.html](https://github.com/AprIsYourLie/IsaacAchievementGuide/blob/main/IsaacAchievementGuide-standalone.html) 离线使用。
+
+- 在线使用：打开网站后即可直接浏览完整成就图鉴。
+- 离线使用：进入 GitHub 文件页面，点击右上角的 **Download raw file**，下载后双击 HTML 文件。
+- 检测进度：点击页面顶部的存档选择区域，选择 `persistentgamedata*.dat`。
 
 常见存档位置：
 
